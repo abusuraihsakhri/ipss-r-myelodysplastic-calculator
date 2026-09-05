@@ -1,116 +1,149 @@
-# Ipss R Myelodysplastic Calculator
+# IPSS-R Myelodysplastic Calculator
 
 > **Domain:** Medical Oncology & Cancer Staging Systems  
-> **Reference Guidelines & Standards:** `AJCC Cancer Staging Manual & NCCN Clinical Practice Guidelines`
+> **Reference:** Greenberg et al., 2012 (Blood) - Revised IPSS for MDS
 
 <div align="center">
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 ![Python](https://img.shields.io/badge/Python-3.10%20%7C%203.11%20%7C%203.12-3776AB.svg?logo=python&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.111-009688.svg?logo=fastapi&logoColor=white)
-![Audit Trail](https://img.shields.io/badge/Audit-HMAC--SHA256_Tamper--Evident-brightgreen.svg)
-![Zero-PHI Guard](https://img.shields.io/badge/Guard-Zero--PHI_Outbound-blue.svg)
-![Docker](https://img.shields.io/badge/Docker-Ready-2496ED.svg?logo=docker&logoColor=white)
 
 </div>
 
 ---
 
-## 📖 What It Does
+## Overview
 
-Revised IPSS (IPSS-R) for Myelodysplastic Syndromes
-Calculates IPSS-R prognostic score for MDS based on cytogenetics, blasts, hemoglobin, platelets, and ANC.
+Revised International Prognostic Scoring System (IPSS-R) for Myelodysplastic Syndromes (MDS). Calculates prognostic scores based on cytogenetics, bone marrow blasts, hemoglobin, platelets, and ANC.
 
-Zero-dependency Python implementation with single and batch evaluation.
-Author: Dr. Abu Suraih Sakhri
-License: MIT
+**Author:** Dr. Abu Suraih Sakhri  
+**License:** MIT
 
 ---
 
-## ⚙️ Key Capabilities & Algorithmic Modules
+## IPSS-R Scoring System
 
-### 🔬 Analytical Functions
+| Parameter | Range | Points |
+|-----------|-------|--------|
+| **Cytogenetics** | Very Good / Good / Intermediate / Poor / Very Poor | 0-4 |
+| **Bone Marrow Blasts** | ≤2% / 2-5% / 5-10% / >10% | 0-3 |
+| **Hemoglobin** | ≥10 / 8-10 / <8 g/dL | 0-1.5 |
+| **Platelets** | ≥100 / 50-100 / <50 ×10⁹/L | 0-1 |
+| **ANC** | ≥0.8 / <0.8 ×10⁹/L | 0-0.5 |
 
-- **`calculate_metrics()`**: Core domain algorithm for ipss-r-myelodysplastic-calculator.
-- **`process_single()`** — calculates and validates process_single parameters.
-- **`process_batch()`** — calculates and validates process_batch parameters.
-- **`main()`** — calculates and validates main parameters.
+**Risk Categories:**
+| Score | Category |
+|-------|----------|
+| ≤1.5 | Very Low |
+| 1.5-3 | Low |
+| 3-4.5 | Intermediate |
+| 4.5-6 | High |
+| >6 | Very High |
 
 ---
 
-## 📐 Mathematical Formulation & Logic
+## Installation
 
-```text
-  score = primary_val
-  rounded_score = round(score, 2)
-  res = calculate_metrics(**kwargs)
-  calc_res = calculate_metrics(**r)
+```bash
+# Clone repository
+git clone https://github.com/abusuraihsakhri/ipss-r-myelodysplastic-calculator.git
+cd ipss-r-myelodysplastic-calculator
+
+# Create virtual environment
+python -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Set audit secret key (required for HMAC audit trail)
+export AUDIT_SECRET_KEY="your-secure-key-here"  # Windows: set AUDIT_SECRET_KEY=...
 ```
 
 ---
 
-## 💻 CLI Quickstart & Usage
+## Usage
 
-### 1. Guided Interactive Mode
+### Single Evaluation
 ```bash
-python cli.py
+python ipss_r.py single \
+  --cytogenetic_risk good \
+  --blast_pct 3.0 \
+  --hemoglobin 9.0 \
+  --platelets 80 \
+  --anc 1.2
 ```
 
-### 2. Direct Parameterized Evaluation
+### Batch Processing
 ```bash
-python cli.py --task-id <value> --target <value> --primary <value> --secondary <value>
+python ipss_r.py batch -i sample.csv -o results.csv
 ```
 
-### Parameter Reference
-- `--task-id`: Specifies input measurement or parameter value.
-- `--target`: Specifies input measurement or parameter value.
-- `--primary`: Specifies input measurement or parameter value.
-- `--secondary`: Specifies input measurement or parameter value.
-- `--critical`: Specifies input measurement or parameter value.
-- `--status`: Specifies input measurement or parameter value.
-- `--input`: Specifies input measurement or parameter value.
-- `--output`: Specifies input measurement or parameter value.
+### Input CSV Format
+| Column | Description | Unit |
+|--------|-------------|------|
+| `cytogenetic_risk` | Risk category | very_good/good/intermediate/poor/very_poor |
+| `blast_pct` | Bone marrow blasts | % (0-100) |
+| `hemoglobin` | Hemoglobin level | g/dL |
+| `platelets` | Platelet count | ×10⁹/L |
+| `anc` | Absolute neutrophil count | ×10⁹/L |
 
-### Input Data Schema
-
-| Field | Description | Requirement |
-|:------|:------------|:------------|
-| `Patient_ID` | Parameter / observation metric | Required |
-| `v1` | Parameter / observation metric | Required |
-| `v2` | Parameter / observation metric | Required |
-| `v3` | Parameter / observation metric | Required |
+### FastAPI Server
+```bash
+python cli.py serve --host 127.0.0.1 --port 8000
+```
 
 ---
 
-## 🛡️ Security & Enterprise Architecture
-
-* **Zero-PHI Outbound Interceptor:** Active AST and regex inspection blocking SSNs, MRNs, phone numbers, and patient identifiers.
-* **Tamper-Evident HMAC-SHA256 Audit Trail:** Chained, cryptographically signed logs for every evaluation and state transition.
-* **Air-Gapped LLM Reasoning Adapter:** Agnostic integration for local Ollama instances (`llama3`, `mistral`), Claude 3.5 Sonnet, GPT-4o, and deterministic test mocks.
-* **Active Learning Bayesian Calibration:** Dynamic tracker updating worker reliability weights and monitoring Brier calibration drift.
-* **FastAPI & Prometheus Telemetry:** Exposes OpenAPI 3.1 REST endpoints and operational Prometheus metrics (`/metrics`).
-
----
-
-## 🧪 Testing & Verification
-
-Run the automated test suite:
+## Testing
 
 ```bash
+# Run all tests
 pytest -v
-```
 
-Execute high-throughput batch simulation benchmarks:
-
-```bash
-python simulator.py --tasks 1000 --concurrency 8
+# Run with coverage
+pytest -v --cov=. --cov-report=html
 ```
 
 ---
 
-## 🐳 Container Deployment
+## Security
+
+- **Audit Trail:** HMAC-SHA256 tamper-evident logging
+- **Environment Variables:** `AUDIT_SECRET_KEY` must be set (min 16 chars)
+- **No Hardcoded Secrets:** All sensitive values loaded from environment
+
+---
+
+## Docker Deployment
 
 ```bash
-docker build -t ipss-r-myelodysplastic-calculator .
-docker run -p 8000:8000 ipss-r-myelodysplastic-calculator
+# Create .env file
+cp .env.example .env
+# Edit .env and set AUDIT_SECRET_KEY
+
+# Build and run
+docker compose up -d
+```
+
+---
+
+## Project Structure
+
+```
+ipss-r-myelodysplastic-calculator/
+├── ipss_r.py              # Core IPSS-R calculation engine
+├── cli.py                 # CLI interface with FastAPI server
+├── sample.csv             # Sample patient data
+├── requirements.txt       # Python dependencies
+├── agents/                # Enterprise supervisor framework
+│   ├── base.py           # Security, PHI guard, audit trail
+│   ├── models.py         # Pydantic data models
+│   ├── supervisor.py     # Multi-worker orchestrator
+│   ├── workers.py        # Specialized evaluation workers
+│   └── api.py            # FastAPI REST endpoints
+├── tests/                # Test suite
+├── web/                  # Operations dashboard
+└── Dockerfile            # Container configuration
 ```
