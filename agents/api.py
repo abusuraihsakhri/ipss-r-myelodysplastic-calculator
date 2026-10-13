@@ -15,9 +15,9 @@ from .supervisor import SystemSupervisor
 supervisor = SystemSupervisor(model_provider="mock")
 
 app = FastAPI(
-    title="Ipss R Myelodysplastic Calculator API",
+    title="IPSS-R Myelodysplastic Calculator API",
     description="IPSS-R scoring and optional audit workflow API",
-    version="3.0.0-ENTERPRISE",
+    version="1.0.0",
 )
 
 
@@ -61,7 +61,7 @@ def metrics():
     return {
         "dossiers_processed_total": len(supervisor.dossier_registry),
         "audit_blocks_total": len(AuditLogger.get_trail()),
-        "system_status": "NOMINAL_OPTIMAL"
+        "system_status": "operational"
     }
 
 
