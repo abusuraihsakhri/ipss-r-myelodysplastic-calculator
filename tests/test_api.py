@@ -29,5 +29,5 @@ def test_api_rejects_out_of_range_blasts():
 
 def test_local_homepage_is_present():
     result = homepage()
-    assert Path(result.path).is_file()
-    assert Path(result.path).name == "index.html"
+    assert result.status_code == 307
+    assert result.headers["location"] == "/web/"
