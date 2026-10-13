@@ -65,3 +65,25 @@ def test_no_implicit_audit_secret(monkeypatch):
     monkeypatch.delenv("AUDIT_SECRET_KEY", raising=False)
     with pytest.raises(SecurityException, match="required"):
         AuditTrail()
+
+
+def test_nested_audit_payload_is_screened(monkeypatch):
+    from agents.models import SystemTaskPayload
+    from agents.supervisor import SystemSupervisor
+    monkeypatch.setenv("AUDIT_SECRET_KEY", "unit-test-only-key-0123456789")
+    payload = SystemTaskPayload(
+        task_id="T1", target_identifier="KEY-1", primary_metric=3,
+        attributes={"note": "MRN-994827"}
+    )
+    with pytest.raises(SecurityException):
+        SystemSupervisor().process_task(payload)
+
+
+@pytest.mark.parametrize("field", ["primary_metric", "secondary_metric"])
+def test_generic_audit_rejects_nonfinite_metrics(field):
+    from pydantic import ValidationError
+    from agents.models import SystemTaskPayload
+    values = {"task_id": "T1", "target_identifier": "KEY-1", "primary_metric": 1.0}
+    values[field] = float("nan")
+    with pytest.raises(ValidationError):
+        SystemTaskPayload(**values)
