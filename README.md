@@ -1,149 +1,81 @@
 # IPSS-R Myelodysplastic Calculator
 
-> **Domain:** Medical Oncology & Cancer Staging Systems  
-> **Reference:** Greenberg et al., 2012 (Blood) - Revised IPSS for MDS
+A calculator for the **original Revised International Prognostic Scoring System (IPSS-R)** in myelodysplastic syndromes (MDS). It reports the total score (0–10), one of five prognostic categories, and individual point contributions.
 
-<div align="center">
+## Browser calculator
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-![Python](https://img.shields.io/badge/Python-3.10%20%7C%203.11%20%7C%203.12-3776AB.svg?logo=python&logoColor=white)
-![FastAPI](https://img.shields.io/badge/FastAPI-0.111-009688.svg?logo=fastapi&logoColor=white)
+The `web/` directory contains a responsive, standalone HTML/JavaScript calculator. Enter a cytogenetic risk group, bone marrow blast percentage, hemoglobin, platelets, and absolute neutrophil count (ANC); then select **Calculate IPSS-R**.
 
-</div>
+- All calculations execute locally in the browser, with **no network request, account, cookies, or local storage** required.
+- Numerical fields reject missing, nonfinite, negative and out-of-range blast values.
+- The browser edition needs no backend or Python runtime and can be opened from `web/index.html` or served as a static site.
+- Cytogenetic risk grouping must first be determined from the full published karyotype definitions; the app does not infer groups from raw karyotypes.
+- For research/batch use, the Python calculator below is the reference implementation.
 
----
+## Score definitions
 
-## Overview
+| Variable | Thresholds → score |
+| --- | --- |
+| Cytogenetics | Very good 0; Good 1; Intermediate 2; Poor 3; Very poor 4 |
+| BM blasts (%) | ≤2: 0; >2 to <5: 1; 5–10: 2; >10: 3 |
+| Hemoglobin (g/dL) | ≥10: 0; 8 to <10: 1; <8: 1.5 |
+| Platelets (×10⁹/L) | ≥100: 0; 50 to <100: 0.5; <50: 1 |
+| ANC (×10⁹/L) | ≥0.8: 0; <0.8: 0.5 |
 
-Revised International Prognostic Scoring System (IPSS-R) for Myelodysplastic Syndromes (MDS). Calculates prognostic scores based on cytogenetics, bone marrow blasts, hemoglobin, platelets, and ANC.
-
-**Author:** Dr. Abu Suraih Sakhri  
-**License:** MIT
-
----
-
-## IPSS-R Scoring System
-
-| Parameter | Range | Points |
-|-----------|-------|--------|
-| **Cytogenetics** | Very Good / Good / Intermediate / Poor / Very Poor | 0-4 |
-| **Bone Marrow Blasts** | ≤2% / 2-5% / 5-10% / >10% | 0-3 |
-| **Hemoglobin** | ≥10 / 8-10 / <8 g/dL | 0-1.5 |
-| **Platelets** | ≥100 / 50-100 / <50 ×10⁹/L | 0-1 |
-| **ANC** | ≥0.8 / <0.8 ×10⁹/L | 0-0.5 |
-
-**Risk Categories:**
-| Score | Category |
-|-------|----------|
+| Total score | Prognostic risk |
+| --- | --- |
 | ≤1.5 | Very Low |
-| 1.5-3 | Low |
-| 3-4.5 | Intermediate |
-| 4.5-6 | High |
+| >1.5 to 3 | Low |
+| >3 to 4.5 | Intermediate |
+| >4.5 to 6 | High |
 | >6 | Very High |
 
----
+**Scientific source:** Greenberg PL et al. *Revised International Prognostic Scoring System for Myelodysplastic Syndromes*. *Blood*. 2012;120:2454–2465. [doi:10.1182/blood-2012-03-420489](https://doi.org/10.1182/blood-2012-03-420489). See the [MDS Foundation / IWG-PM scoring tables](https://ipssradvanced.mds-foundation.org/).
 
-## Installation
+## Python and REST API
+
+Python 3.10+ is required for the server and the optional audit framework. The core `ipss_r.py` calculator uses only the Python standard library.
 
 ```bash
-# Clone repository
-git clone https://github.com/abusuraihsakhri/ipss-r-myelodysplastic-calculator.git
-cd ipss-r-myelodysplastic-calculator
-
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Set audit secret key (required for HMAC audit trail)
-export AUDIT_SECRET_KEY="your-secure-key-here"  # Windows: set AUDIT_SECRET_KEY=...
-```
-
----
-
-## Usage
-
-### Single Evaluation
-```bash
-python ipss_r.py single \
-  --cytogenetic_risk good \
-  --blast_pct 3.0 \
-  --hemoglobin 9.0 \
-  --platelets 80 \
-  --anc 1.2
-```
-
-### Batch Processing
-```bash
+python -m pip install -r requirements.txt
+python ipss_r.py single --cytogenetic_risk good --blast_pct 3 --hemoglobin 9 --platelets 80 --anc 1.2
 python ipss_r.py batch -i sample.csv -o results.csv
-```
-
-### Input CSV Format
-| Column | Description | Unit |
-|--------|-------------|------|
-| `cytogenetic_risk` | Risk category | very_good/good/intermediate/poor/very_poor |
-| `blast_pct` | Bone marrow blasts | % (0-100) |
-| `hemoglobin` | Hemoglobin level | g/dL |
-| `platelets` | Platelet count | ×10⁹/L |
-| `anc` | Absolute neutrophil count | ×10⁹/L |
-
-### FastAPI Server
-```bash
 python cli.py serve --host 127.0.0.1 --port 8000
 ```
 
----
+The local browser UI will be available at `http://127.0.0.1:8000/`; interactive API documentation at `http://127.0.0.1:8000/docs`. Call `POST /api/calculate` with:
 
-## Testing
+```json
+{
+  "cytogenetic_risk": "good",
+  "blast_pct": 3,
+  "hemoglobin": 9,
+  "platelets": 80,
+  "anc": 1.2
+}
+```
+
+For batch CSV, required headers are `cytogenetic_risk,blast_pct,hemoglobin,platelets,anc`. Rows that fail validation are marked `ERROR`. The existing `cli.py audit`, `verify-audit`, `chat`, and `batch` commands operate on a **separate generic audit workflow**, not the IPSS-R clinical score.
+
+The generic audit workflow uses an in-memory HMAC-SHA256 chain and requires a real secret supplied as `AUDIT_SECRET_KEY` (minimum 16 characters). Generate one with `python -c "import secrets; print(secrets.token_hex(32))"`; do not put production secrets in source, browser code, or Git history.
+
+Docker: copy `.env.example` to `.env`, set a strong `AUDIT_SECRET_KEY`, and run `docker compose up --build`. The server listens on port 8000. The audit trail is in-memory, not durable storage.
+
+## Tests
 
 ```bash
-# Run all tests
-pytest -v
-
-# Run with coverage
-pytest -v --cov=. --cov-report=html
+python -m pytest -q
+node --test tests/test_browser_score.cjs
 ```
 
----
+The CI workflow runs Python tests on 3.10–3.13 plus Node 22 browser-score and page-syntax tests. The Pages workflow publishes the static `web/` directory after merges to `master`.
 
-## Security
+## Privacy, scope, limitations
 
-- **Audit Trail:** HMAC-SHA256 tamper-evident logging
-- **Environment Variables:** `AUDIT_SECRET_KEY` must be set (min 16 chars)
-- **No Hardcoded Secrets:** All sensitive values loaded from environment
+The **static browser calculator** transmits and stores no inputs. However, the optional API, generic audit framework, and local server have **not** been assessed as HIPAA-compliant; do not submit patient identifiers or protected health information to an exposed instance. Pattern-based identifier checks are not comprehensive de-identification or a security guarantee.
 
----
+IPSS-R is a prognostic classification derived largely from untreated adult MDS cohorts; it is not a treatment rule, a diagnostic test, an IPSS-M implementation, a clinical decision support validation, or regulatory certification. It does not adjust estimates for age or molecular profiles. Clinical interpretation requires appropriate diagnostic and specialist review.
 
-## Docker Deployment
+This project retains optional experimental generic audit, mock-chat, and enrichment modules. They do **not** implement or validate FHIR ingestion, cross-institutional analytics, or medical regulatory compliance.
 
-```bash
-# Create .env file
-cp .env.example .env
-# Edit .env and set AUDIT_SECRET_KEY
-
-# Build and run
-docker compose up -d
-```
-
----
-
-## Project Structure
-
-```
-ipss-r-myelodysplastic-calculator/
-├── ipss_r.py              # Core IPSS-R calculation engine
-├── cli.py                 # CLI interface with FastAPI server
-├── sample.csv             # Sample patient data
-├── requirements.txt       # Python dependencies
-├── agents/                # Enterprise supervisor framework
-│   ├── base.py           # Security, PHI guard, audit trail
-│   ├── models.py         # Pydantic data models
-│   ├── supervisor.py     # Multi-worker orchestrator
-│   ├── workers.py        # Specialized evaluation workers
-│   └── api.py            # FastAPI REST endpoints
-├── tests/                # Test suite
-├── web/                  # Operations dashboard
-└── Dockerfile            # Container configuration
-```
+**License:** [MIT](LICENSE). **Author:** Dr. Abu Suraih Sakhri.

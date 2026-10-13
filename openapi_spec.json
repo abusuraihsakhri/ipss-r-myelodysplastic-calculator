@@ -1,112 +1,140 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "Ipss R Myelodysplastic Calculator API",
-    "description": "Enterprise Distributed Component Platform (Clinical & Cryptographic AI) adhering to CAP / CLSI / NIST Standards.",
-    "version": "3.0.0-ENTERPRISE",
-    "contact": {
-      "name": "Dr. Abu Suraih Sakhri",
-      "url": "https://github.com/abusuraihsakhri"
-    }
+    "title": "IPSS-R Myelodysplastic Calculator API",
+    "version": "1.0.0",
+    "description": "Published IPSS-R scoring and a separate, experimental generic audit workflow. Clinical score is prognostic, not treatment guidance."
   },
   "paths": {
-    "/health": {
+    "/": {
       "get": {
-        "summary": "Health and metadata check",
+        "summary": "Browser calculator",
         "responses": {
           "200": {
-            "description": "System optimal"
+            "description": "HTML user interface"
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "summary": "Service health",
+        "responses": {
+          "200": {
+            "description": "Service available"
           }
         }
       }
     },
     "/metrics": {
       "get": {
-        "summary": "Prometheus operational metrics",
+        "summary": "In-memory operational counters",
         "responses": {
           "200": {
-            "description": "Prometheus text metrics"
+            "description": "JSON counters"
+          }
+        }
+      }
+    },
+    "/api/calculate": {
+      "post": {
+        "summary": "Calculate IPSS-R prognostic score",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IPSSRInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Score, risk category, and component points"
+          },
+          "422": {
+            "description": "Missing or invalid parameter"
           }
         }
       }
     },
     "/api/audit": {
       "post": {
-        "summary": "Dispatch task payload across specialized workers",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "task_id": {
-                    "type": "string"
-                  },
-                  "target_identifier": {
-                    "type": "string"
-                  },
-                  "primary_metric": {
-                    "type": "number"
-                  },
-                  "secondary_metric": {
-                    "type": "number"
-                  },
-                  "status_descriptor": {
-                    "type": "string"
-                  },
-                  "is_critical_flag": {
-                    "type": "boolean"
-                  }
-                },
-                "required": [
-                  "task_id",
-                  "target_identifier",
-                  "primary_metric"
-                ]
-              }
-            }
-          }
-        },
+        "summary": "Evaluate generic audit workflow (not clinical IPSS-R)",
         "responses": {
           "200": {
-            "description": "Consensus dossier with HMAC signature"
+            "description": "Audit dossier"
+          },
+          "422": {
+            "description": "Validation failure"
           }
         }
       }
     },
     "/api/chat": {
       "post": {
-        "summary": "Air-gapped supervisory conversational assistant",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "query": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "query"
-                ]
-              }
-            }
-          }
-        },
+        "summary": "Mock chat response (not verified clinical guidance)",
         "responses": {
           "200": {
-            "description": "Supervisory response"
+            "description": "Mock response"
           }
         }
       }
     },
     "/api/audit/logs": {
       "get": {
-        "summary": "Retrieve and cryptographically verify HMAC audit trail",
+        "summary": "Inspect in-memory audit log",
         "responses": {
           "200": {
-            "description": "Cryptographic audit trail"
+            "description": "Audit hashes and integrity result"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "IPSSRInput": {
+        "type": "object",
+        "required": [
+          "cytogenetic_risk",
+          "blast_pct",
+          "hemoglobin",
+          "platelets",
+          "anc"
+        ],
+        "properties": {
+          "cytogenetic_risk": {
+            "type": "string",
+            "enum": [
+              "very_good",
+              "good",
+              "intermediate",
+              "poor",
+              "very_poor"
+            ]
+          },
+          "blast_pct": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100,
+            "description": "Bone marrow blasts (%)"
+          },
+          "hemoglobin": {
+            "type": "number",
+            "minimum": 0,
+            "description": "g/dL"
+          },
+          "platelets": {
+            "type": "number",
+            "minimum": 0,
+            "description": "10^9/L"
+          },
+          "anc": {
+            "type": "number",
+            "minimum": 0,
+            "description": "10^9/L"
           }
         }
       }

@@ -242,3 +242,34 @@ class TestBatchProcessing:
 
         with pytest.raises(FileNotFoundError):
             process_batch(str(csv_in), str(csv_out))
+
+
+    def test_empty_batch_writes_header(self, tmp_path):
+        src = tmp_path / "empty.csv"
+        out = tmp_path / "out.csv"
+        src.write_text("cytogenetic_risk,blast_pct,hemoglobin,platelets,anc\n", encoding="utf-8")
+        process_batch(str(src), str(out))
+        assert out.exists()
+        assert "ipss_r_score" in out.read_text(encoding="utf-8")
+
+    def test_extra_csv_field_is_recorded_as_row_error(self, tmp_path):
+        src = tmp_path / "bad.csv"
+        out = tmp_path / "out.csv"
+        src.write_text(
+            "cytogenetic_risk,blast_pct,hemoglobin,platelets,anc\n"
+            "good,3,9,80,1.2,extra-field\n", encoding="utf-8"
+        )
+        process_batch(str(src), str(out))
+        content = out.read_text(encoding="utf-8")
+        assert "ERROR" in content
+        assert "more fields" in content
+
+    def test_duplicate_csv_headers_are_rejected(self, tmp_path):
+        src = tmp_path / "bad.csv"
+        out = tmp_path / "out.csv"
+        src.write_text(
+            "cytogenetic_risk,blast_pct,blast_pct,hemoglobin,platelets,anc\n"
+            "good,3,3,9,80,1.2\n", encoding="utf-8"
+        )
+        with pytest.raises(ValueError, match="duplicate"):
+            process_batch(str(src), str(out))

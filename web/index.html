@@ -1,236 +1,198 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ipss R Myelodysplastic Calculator — Operations Console</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --bg: #090d16;
-            --card: #111827;
-            --border: #1f293d;
-            --accent: #3b82f6;
-            --accent-glow: rgba(59, 130, 246, 0.25);
-            --text: #f3f4f6;
-            --text-muted: #9ca3af;
-            --danger: #ef4444;
-            --warning: #f59e0b;
-            --success: #10b981;
-        }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-            font-family: 'Inter', sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            padding: 2rem;
-            min-height: 100vh;
-        }
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid var(--border);
-            padding-bottom: 1.5rem;
-            margin-bottom: 2rem;
-        }
-        .header-title h1 { font-size: 1.6rem; font-weight: 700; color: #fff; }
-        .header-title p { color: var(--text-muted); font-size: 0.9rem; margin-top: 0.25rem; }
-        .badge {
-            display: inline-block;
-            padding: 0.3rem 0.8rem;
-            border-radius: 9999px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            background: var(--accent-glow);
-            color: var(--accent);
-            border: 1px solid var(--accent);
-        }
-        .grid {
-            display: grid;
-            grid-template-columns: 1fr 1.2fr;
-            gap: 1.5rem;
-        }
-        .card {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 1.5rem;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-        }
-        .card h2 {
-            font-size: 1.1rem;
-            font-weight: 600;
-            margin-bottom: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        .form-group { margin-bottom: 1rem; }
-        label { display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.4rem; }
-        input, select, textarea {
-            width: 100%;
-            padding: 0.65rem 0.9rem;
-            background: #0d1322;
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            color: #fff;
-            font-family: inherit;
-            font-size: 0.9rem;
-        }
-        input:focus, textarea:focus { outline: none; border-color: var(--accent); }
-        .btn {
-            background: var(--accent);
-            color: #fff;
-            border: none;
-            padding: 0.7rem 1.4rem;
-            border-radius: 6px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: 0.2s;
-            width: 100%;
-        }
-        .btn:hover { background: #2563eb; }
-        .terminal {
-            background: #060911;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 1rem;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.85rem;
-            color: #10b981;
-            height: 380px;
-            overflow-y: auto;
-            white-space: pre-wrap;
-        }
-        .metrics-bar {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-        }
-        .metric-box {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 1rem;
-            text-align: center;
-        }
-        .metric-val { font-size: 1.4rem; font-weight: 700; color: #fff; margin-top: 0.25rem; }
-        .metric-label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; }
-    </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Offline-capable IPSS-R risk score calculator for myelodysplastic syndromes.">
+  <meta name="color-scheme" content="light">
+  <title>IPSS-R | Myelodysplastic Syndromes</title>
+  <style>
+    :root { font-family: system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; color:#172b42; background:#f3f6fa; }
+    * { box-sizing:border-box; }
+    body { margin:0; line-height:1.5; }
+    main { max-width:1120px; margin:0 auto; padding:28px 22px 60px; }
+    a { color:#165a96; }
+    .eyebrow { color:#43748d; font-size:.79rem; text-transform:uppercase; letter-spacing:.12em; font-weight:750; }
+    h1 { font-size:clamp(1.8rem,4vw,2.55rem); line-height:1.17; letter-spacing:-.03em; margin:9px 0; }
+    .intro { color:#526477; max-width:760px; margin:0 0 22px; }
+    .layout { display:grid; grid-template-columns:minmax(0,1.1fr) minmax(290px,.9fr); gap:20px; align-items:start; }
+    .panel { background:#fff; border:1px solid #dce5ec; border-radius:16px; padding:25px; box-shadow:0 3px 15px rgba(25,47,69,.05); }
+    h2 { font-size:1.18rem; margin:0 0 6px; }
+    .muted { color:#5e7080; font-size:.9rem; margin:0 0 18px; }
+    .fields { display:grid; grid-template-columns:1fr 1fr; gap:16px 17px; }
+    .wide { grid-column:1/-1; }
+    label { display:block; font-size:.88rem; font-weight:650; margin-bottom:6px; }
+    select,input { display:block; width:100%; min-height:43px; padding:9px 11px; font:inherit; border:1px solid #a7b9c9; border-radius:8px; background:white; color:#162c43; }
+    select:focus-visible,input:focus-visible,button:focus-visible,a:focus-visible { outline:3px solid #a0cfff; outline-offset:2px; }
+    .hint { font-size:.78rem; color:#607183; margin-top:5px; }
+    .buttons { display:flex; gap:12px; flex-wrap:wrap; margin-top:22px; }
+    button { font:inherit; font-weight:700; border-radius:8px; padding:11px 19px; cursor:pointer; }
+    button.primary { border:1px solid #155b96; background:#155b96; color:white; }
+    button.secondary { border:1px solid #abbcca; background:#fff; color:#1d445f; }
+    button:hover { filter:brightness(.96); }
+    .error { min-height:1.5em; margin-top:12px; color:#a52229; font-weight:620; }
+    .result { border-top:5px solid #b5c8d8; }
+    .result.ready { border-color:#145b92; }
+    .empty { min-height:160px; display:grid; place-items:center; border:1px dashed #bdcbd7; border-radius:10px; color:#637487; text-align:center; padding:20px; }
+    .score-row { display:flex; align-items:center; justify-content:space-between; gap:12px; padding-bottom:14px; border-bottom:1px solid #e2eaf1; }
+    .score { font-size:3.15rem; font-weight:760; letter-spacing:-.05em; line-height:1.1; color:#164c78; }
+    .score small { font-size:.95rem; color:#617182; font-weight:400; letter-spacing:0; }
+    .risk { font-weight:760; font-size:1.1rem; text-align:right; }
+    .risk small { display:block; font-size:.78rem; font-weight:500; color:#617182; }
+    .bar { display:grid; grid-template-columns:repeat(5,1fr); gap:4px; margin:16px 0; }
+    .bar span { height:11px; background:#e4eaf0; border-radius:3px; }
+    .bar span.active { background:#165b91; }
+    .breakdown { width:100%; border-collapse:collapse; font-size:.92rem; margin-top:11px; }
+    .breakdown th { text-align:left; color:#596d7d; font-weight:550; }
+    .breakdown td { text-align:right; font-variant-numeric:tabular-nums; font-weight:700; }
+    .breakdown th,.breakdown td { padding:9px 0; border-bottom:1px solid #ebeff3; }
+    .note { margin-top:17px; padding:11px 13px; background:#edf5fb; border-radius:8px; font-size:.84rem; color:#31516b; }
+    footer { border-top:1px solid #d5e0e9; margin-top:25px; padding-top:20px; color:#596b7a; font-size:.86rem; }
+    footer p { margin:9px 0; }
+    [hidden] { display:none !important; }
+    @media(max-width:780px) { .layout { grid-template-columns:1fr; } main { padding:22px 14px 36px; } .panel { padding:19px; } }
+    @media(max-width:440px) { .fields { grid-template-columns:1fr; } .buttons button { flex:1; } }
+  </style>
+  <script defer src="./score.js"></script>
 </head>
 <body>
-
-    <div class="header">
-        <div class="header-title">
-            <h1>Ipss R Myelodysplastic Calculator</h1>
-            <p>Domain: Clinical & Cryptographic AI | Standard: CAP / CLSI / NIST Standards | LabMind-Atlas Architecture</p>
+  <main>
+    <header>
+      <div class="eyebrow">Hematology · Prognostic risk assessment</div>
+      <h1>IPSS-R Calculator</h1>
+      <p class="intro">Revised International Prognostic Scoring System for myelodysplastic syndromes (MDS). Enter five clinical parameters to calculate the original 2012 IPSS-R score.</p>
+    </header>
+    <div class="layout">
+      <section class="panel" aria-labelledby="form-title">
+        <h2 id="form-title">Patient parameters</h2>
+        <p class="muted">Use laboratory results and an expert-assigned cytogenetic risk group. All five fields are required.</p>
+        <form id="calculator" novalidate>
+          <div class="fields">
+            <div class="wide">
+              <label for="cytogenetic_risk">Cytogenetic risk group</label>
+              <select id="cytogenetic_risk" name="cytogenetic_risk" required>
+                <option value="">Select cytogenetic group</option>
+                <option value="very_good">Very good (0 points)</option>
+                <option value="good">Good (1 point)</option>
+                <option value="intermediate">Intermediate (2 points)</option>
+                <option value="poor">Poor (3 points)</option>
+                <option value="very_poor">Very poor (4 points)</option>
+              </select>
+              <p class="hint">Examples: normal → Good; −7 → Poor; complex &gt;3 abnormalities → Very poor. Confirm subgroup assignment in the original table.</p>
+            </div>
+            <div>
+              <label for="blast_pct">Bone marrow blasts (%)</label>
+              <input id="blast_pct" name="blast_pct" type="number" min="0" max="100" step="any" inputmode="decimal" placeholder="e.g. 3" required>
+              <p class="hint">Valid range 0–100%</p>
+            </div>
+            <div>
+              <label for="hemoglobin">Hemoglobin (g/dL)</label>
+              <input id="hemoglobin" name="hemoglobin" type="number" min="0" step="any" inputmode="decimal" placeholder="e.g. 9" required>
+            </div>
+            <div>
+              <label for="platelets">Platelets (×10⁹/L)</label>
+              <input id="platelets" name="platelets" type="number" min="0" step="any" inputmode="decimal" placeholder="e.g. 80" required>
+            </div>
+            <div>
+              <label for="anc">Absolute neutrophil count (×10⁹/L)</label>
+              <input id="anc" name="anc" type="number" min="0" step="any" inputmode="decimal" placeholder="e.g. 1.2" required>
+            </div>
+          </div>
+          <div class="buttons">
+            <button class="primary" type="submit">Calculate IPSS-R</button>
+            <button class="secondary" type="reset">Clear</button>
+          </div>
+          <div class="error" id="error" role="alert" aria-live="assertive"></div>
+        </form>
+      </section>
+      <section id="result-panel" class="panel result" aria-labelledby="result-title" aria-live="polite">
+        <h2 id="result-title">Risk assessment</h2>
+        <p class="muted">Calculated locally in this browser. No patient inputs are transmitted or saved.</p>
+        <div id="empty" class="empty">Enter values and select <strong>Calculate IPSS-R</strong> to see the score and component breakdown.</div>
+        <div id="details" hidden>
+          <div class="score-row">
+            <div><div id="score" class="score"></div><span class="hint">Total IPSS-R points (0–10)</span></div>
+            <div id="risk" class="risk"></div>
+          </div>
+          <div class="bar" id="riskbar" aria-label="IPSS-R prognostic risk spectrum">
+            <span></span><span></span><span></span><span></span><span></span>
+          </div>
+          <table class="breakdown" aria-label="IPSS-R component point contributions">
+            <tbody>
+              <tr><th scope="row">Cytogenetics</th><td id="p-cyto"></td></tr>
+              <tr><th scope="row">Bone marrow blasts</th><td id="p-blast"></td></tr>
+              <tr><th scope="row">Hemoglobin</th><td id="p-hb"></td></tr>
+              <tr><th scope="row">Platelets</th><td id="p-plt"></td></tr>
+              <tr><th scope="row">ANC</th><td id="p-anc"></td></tr>
+            </tbody>
+          </table>
+          <p class="note">IPSS-R is prognostic, not a stand-alone treatment directive. Interpret with clinical context, disease classification and other relevant prognostic information.</p>
         </div>
-        <div>
-            <span class="badge">Air-Gapped Active</span>
-            <span class="badge" style="background: rgba(16,185,129,0.2); color: #10b981; border-color: #10b981;">Zero-PHI Guard Active</span>
-        </div>
+      </section>
     </div>
-
-    <div class="metrics-bar">
-        <div class="metric-box">
-            <div class="metric-label">System Status</div>
-            <div class="metric-val" style="color: var(--success);" id="m-status">OPTIMAL</div>
-        </div>
-        <div class="metric-box">
-            <div class="metric-label">Tasks Processed</div>
-            <div class="metric-val" id="m-tasks">142</div>
-        </div>
-        <div class="metric-box">
-            <div class="metric-label">Audit Blocks Signed</div>
-            <div class="metric-val" id="m-audit">142</div>
-        </div>
-        <div class="metric-box">
-            <div class="metric-label">PHI Interceptions</div>
-            <div class="metric-val" style="color: var(--accent);" id="m-phi">0</div>
-        </div>
-    </div>
-
-    <div class="grid">
-        <div class="card">
-            <h2>⚙️ Dispatch Distributed Component Audit</h2>
-            <div class="form-group">
-                <label>Task / Sample ID</label>
-                <input type="text" id="task_id" value="TASK-2026-LIVE-01">
-            </div>
-            <div class="form-group">
-                <label>Target Identifier</label>
-                <input type="text" id="target_id" value="SPECIMEN-ALPHA-77">
-            </div>
-            <div class="form-group">
-                <label>Primary Measurement / Value</label>
-                <input type="number" id="primary_metric" value="29.4" step="0.1">
-            </div>
-            <div class="form-group">
-                <label>Secondary Metric / Kinetic Index</label>
-                <input type="number" id="secondary_metric" value="14.8" step="0.1">
-            </div>
-            <div class="form-group">
-                <label>Status / Phenotype Descriptor</label>
-                <input type="text" id="status_descriptor" value="DISCORDANT_ANOMALY">
-            </div>
-            <div class="form-group">
-                <label><input type="checkbox" id="is_critical" checked> Trigger Emergency / Critical Flag</label>
-            </div>
-            <button class="btn" onclick="runAudit()">Execute Distributed Component Audit</button>
-        </div>
-
-        <div class="card">
-            <h2>📊 Real-Time Consensus Dossier & Audit Log</h2>
-            <div class="terminal" id="outputConsole">// Ipss R Myelodysplastic Calculator Operations Console Ready
-// Connection established with Air-Gapped Supervisor
-// Cryptographic HMAC-SHA256 audit ledger loaded.
-// Ready for live task payload dispatch...</div>
-        </div>
-    </div>
-
-    <script>
-        async function runAudit() {
-            const consoleEl = document.getElementById('outputConsole');
-            consoleEl.innerText = "// Dispatching task across specialized workers...
-// Invoking InvariantQCWorker, SafetyEscalationWorker, ProtocolWorker...";
-
-            const payload = {
-                task_id: document.getElementById('task_id').value,
-                target_identifier: document.getElementById('target_id').value,
-                primary_metric: parseFloat(document.getElementById('primary_metric').value),
-                secondary_metric: parseFloat(document.getElementById('secondary_metric').value),
-                status_descriptor: document.getElementById('status_descriptor').value,
-                is_critical_flag: document.getElementById('is_critical').checked
-            };
-
-            try {
-                const res = await fetch('/api/audit', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                const data = await res.json();
-                consoleEl.innerText = JSON.stringify(data, null, 2);
-                document.getElementById('m-tasks').innerText = parseInt(document.getElementById('m-tasks').innerText) + 1;
-                document.getElementById('m-audit').innerText = parseInt(document.getElementById('m-audit').innerText) + 1;
-            } catch (err) {
-                consoleEl.innerText = "// Offline / Simulation Output:\n" + JSON.stringify({
-                    dossier_id: "DOSSIER-SIM-" + Math.floor(Math.random()*10000),
-                    system: "ipss-r-myelodysplastic-calculator",
-                    domain: "Clinical & Cryptographic AI",
-                    task_id: payload.task_id,
-                    overall_urgency: payload.is_critical_flag ? "CRITICAL_STAT_PANIC" : "ELEVATED_RISK",
-                    integrity_status: "DISCORDANT_ANOMALY",
-                    alerts: [
-                        { worker: "InvariantQCWorker", alert: "Primary metric exceeds upper reference bound" },
-                        { worker: "SafetyEscalationWorker", alert: "Critical emergency interlock flag active" }
-                    ],
-                    audit_hash: "HMAC_SHA256_e83f9a72b941d6c381f9"
-                }, null, 2);
-            }
+    <footer>
+      <p><strong>Intended scope:</strong> Original IPSS-R prognostic classification for primarily untreated adult MDS. This calculator does not implement the molecular IPSS-M, age adjustments or survival predictions.</p>
+      <p><strong>Reference:</strong> Greenberg PL et al. <em>Blood</em>. 2012;120:2454–2465. <a href="https://doi.org/10.1182/blood-2012-03-420489" target="_blank" rel="noopener noreferrer">Original study</a> · <a href="https://ipssradvanced.mds-foundation.org/" target="_blank" rel="noopener noreferrer">IWG-PM scoring tables</a>.</p>
+      <p>Educational/research use; verify cytogenetic assignment and clinical interpretation with a qualified hematology team.</p>
+    </footer>
+  </main>
+  <script>
+    (function () {
+      "use strict";
+      const form = document.getElementById("calculator");
+      const error = document.getElementById("error");
+      const empty = document.getElementById("empty");
+      const details = document.getElementById("details");
+      const panel = document.getElementById("result-panel");
+      const ids = ["cytogenetic_risk", "blast_pct", "hemoglobin", "platelets", "anc"];
+      function clearResult() {
+        error.textContent = "";
+        empty.hidden = false;
+        details.hidden = true;
+        panel.classList.remove("ready");
+      }
+      form.addEventListener("reset", clearResult);
+      form.addEventListener("input", function () {
+        clearResult();
+      });
+      form.addEventListener("submit", function (event) {
+        event.preventDefault();
+        clearResult();
+        for (const id of ids) {
+          const field = document.getElementById(id);
+          if (!field.validity.valid || field.value.trim() === "") {
+            error.textContent = "Check the required fields and numeric limits.";
+            field.focus();
+            return;
+          }
         }
-    </script>
+        const values = {};
+        ids.forEach(function (id) { values[id] = document.getElementById(id).value; });
+        try {
+          const output = window.IPSSR.calculate(values);
+          document.getElementById("score").textContent = output.ipss_r_score.toFixed(1);
+          document.getElementById("risk").textContent = output.risk_category;
+          const points = output.component_scores;
+          const mapping = {
+            "p-cyto": points.cytogenetics, "p-blast": points.bone_marrow_blasts,
+            "p-hb": points.hemoglobin, "p-plt": points.platelets, "p-anc": points.anc
+          };
+          for (const key of Object.keys(mapping)) {
+            document.getElementById(key).textContent = mapping[key].toFixed(1);
+          }
+          const riskNames = ["Very Low", "Low", "Intermediate", "High", "Very High"];
+          const position = riskNames.indexOf(output.risk_category);
+          document.querySelectorAll("#riskbar span").forEach(function (segment, index) {
+            segment.classList.toggle("active", index <= position);
+          });
+          empty.hidden = true;
+          details.hidden = false;
+          panel.classList.add("ready");
+        } catch (exception) {
+          error.textContent = exception.message || "Unable to calculate score.";
+        }
+      });
+    })();
+  </script>
 </body>
 </html>
