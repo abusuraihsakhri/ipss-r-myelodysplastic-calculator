@@ -6,10 +6,6 @@ import time
 import random
 import sys
 
-# Ensure AUDIT_SECRET_KEY is set for audit trail
-if "AUDIT_SECRET_KEY" not in os.environ:
-    os.environ["AUDIT_SECRET_KEY"] = "simulator-test-key-not-for-production"
-
 from agents.models import SystemTaskPayload
 from agents.supervisor import SystemSupervisor
 from agents.base import PHIGuard, SecurityException, AuditLogger
