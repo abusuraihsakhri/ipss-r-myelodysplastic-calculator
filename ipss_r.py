@@ -225,12 +225,16 @@ def process_batch(input_csv: str, output_csv: str) -> None:
         raise FileNotFoundError(f"Input file not found: {input_csv}")
 
     with open(input_csv, mode="r", encoding="utf-8-sig") as f:
-        reader = csv.DictReader(f)
+        reader = csv.DictReader(f, restkey="__extra_fields__")
         fieldnames = list(reader.fieldnames or [])
         rows = list(reader)
 
     if not fieldnames:
         raise ValueError("Input CSV must contain a header row")
+    if any(not name or not name.strip() for name in fieldnames):
+        raise ValueError("Input CSV contains a blank column name")
+    if len(set(fieldnames)) != len(fieldnames):
+        raise ValueError("Input CSV contains duplicate column names")
 
     # Map common column name variants
     column_mapping = {
@@ -246,6 +250,14 @@ def process_batch(input_csv: str, output_csv: str) -> None:
     errors = []
 
     for idx, r in enumerate(rows):
+        if "__extra_fields__" in r:
+            message = "CSV record has more fields than the header"
+            errors.append(f"Row {idx + 2}: {message}")
+            row_dict = {name: r.get(name, "") for name in fieldnames}
+            row_dict.update(ipss_r_score="ERROR", risk_category="ERROR", clinical_recommendation=message)
+            out_rows.append(row_dict)
+            continue
+
         # Normalize column names
         normalized = {}
         for target, alternatives in column_mapping.items():
@@ -256,7 +268,7 @@ def process_batch(input_csv: str, output_csv: str) -> None:
 
         try:
             calc_res = calculate_metrics(**normalized)
-            row_dict = dict(r)
+            row_dict = {name: r.get(name, '') for name in fieldnames}
             row_dict["ipss_r_score"] = calc_res["ipss_r_score"]
             row_dict["risk_category"] = calc_res["risk_category"]
             row_dict["clinical_recommendation"] = calc_res["clinical_recommendation"]
