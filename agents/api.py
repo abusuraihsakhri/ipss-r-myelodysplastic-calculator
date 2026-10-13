@@ -4,6 +4,10 @@ FastAPI REST API Server for Ipss R Myelodysplastic Calculator.
 from typing import Dict, Any, List
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
+from pathlib import Path
+from ipss_r import calculate_metrics
 from .base import AuditLogger, PHIGuard
 from .models import SystemTaskPayload, ConsensusDossier
 from .supervisor import SystemSupervisor
@@ -12,9 +16,35 @@ supervisor = SystemSupervisor(model_provider="mock")
 
 app = FastAPI(
     title="Ipss R Myelodysplastic Calculator API",
-    description="Enterprise Distributed Component Platform (Clinical & Biomedical AI)",
+    description="IPSS-R scoring and optional audit workflow API",
     version="3.0.0-ENTERPRISE",
 )
+
+
+class CalculationRequest(BaseModel):
+    cytogenetic_risk: str
+    blast_pct: float
+    hemoglobin: float
+    platelets: float
+    anc: float
+
+
+# The same standalone HTML and JS work from FastAPI and GitHub Pages.
+WEB_DIR = Path(__file__).resolve().parents[1] / "web"
+app.mount("/web", StaticFiles(directory=WEB_DIR), name="web")
+
+
+@app.get("/", include_in_schema=False)
+def homepage():
+    return FileResponse(WEB_DIR / "index.html")
+
+
+@app.post("/api/calculate")
+def api_calculate(payload: CalculationRequest):
+    try:
+        return calculate_metrics(**payload.model_dump())
+    except (ValueError, TypeError) as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
 
 
 class ChatRequest(BaseModel):
@@ -23,7 +53,7 @@ class ChatRequest(BaseModel):
 
 @app.get("/health")
 def health():
-    return {"status": "HEALTHY", "service": "ipss-r-myelodysplastic-calculator", "domain": "Clinical & Biomedical AI", "standard": "CAP / CLSI / ISO Standards", "version": "3.0.0-ENTERPRISE"}
+    return {"status": "ok", "service": "ipss-r-myelodysplastic-calculator"}
 
 
 @app.get("/metrics")
