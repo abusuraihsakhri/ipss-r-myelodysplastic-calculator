@@ -40,6 +40,21 @@ CYTOGENETIC_RISK_SCORES = {
 }
 
 
+def _nonnegative_finite(value: float, label: str, maximum: Optional[float] = None) -> float:
+    """Validate numbers before applying prognostic scoring cutoffs."""
+    try:
+        number = float(value)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError(f"{label} must be a finite number") from exc
+    if not math.isfinite(number):
+        raise ValueError(f"{label} must be a finite number")
+    if number < 0:
+        raise ValueError(f"{label} cannot be negative")
+    if maximum is not None and number > maximum:
+        raise ValueError(f"{label} cannot exceed {maximum:g}")
+    return number
+
+
 def score_cytogenetics(cytogenetic_risk: str) -> float:
     """Score cytogenetic risk category (0-4 points)."""
     risk = str(cytogenetic_risk).strip().lower().replace(" ", "_").replace("-", "_")
@@ -62,9 +77,7 @@ def score_cytogenetics(cytogenetic_risk: str) -> float:
 
 def score_blasts(blast_pct: float) -> float:
     """Score bone marrow blast percentage (0-3 points)."""
-    pct = float(blast_pct)
-    if pct < 0:
-        raise ValueError("Blast percentage cannot be negative")
+    pct = _nonnegative_finite(blast_pct, "Blast percentage", 100.0)
     if pct <= 2.0:
         return 0.0
     elif pct < 5.0:
@@ -77,9 +90,7 @@ def score_blasts(blast_pct: float) -> float:
 
 def score_hemoglobin(hemoglobin: float) -> float:
     """Score hemoglobin level (0-1.5 points)."""
-    hgb = float(hemoglobin)
-    if hgb < 0:
-        raise ValueError("Hemoglobin cannot be negative")
+    hgb = _nonnegative_finite(hemoglobin, "Hemoglobin")
     if hgb >= 10.0:
         return 0.0
     elif hgb >= 8.0:
@@ -90,9 +101,7 @@ def score_hemoglobin(hemoglobin: float) -> float:
 
 def score_platelets(platelets: float) -> float:
     """Score platelet count (0-1 point)."""
-    plt = float(platelets)
-    if plt < 0:
-        raise ValueError("Platelet count cannot be negative")
+    plt = _nonnegative_finite(platelets, "Platelet count")
     if plt >= 100.0:
         return 0.0
     elif plt >= 50.0:
@@ -103,9 +112,7 @@ def score_platelets(platelets: float) -> float:
 
 def score_anc(anc: float) -> float:
     """Score absolute neutrophil count (0-0.5 points)."""
-    neutrophil = float(anc)
-    if neutrophil < 0:
-        raise ValueError("ANC cannot be negative")
+    neutrophil = _nonnegative_finite(anc, "ANC")
     if neutrophil >= 0.8:
         return 0.0
     else:
@@ -114,16 +121,18 @@ def score_anc(anc: float) -> float:
 
 def classify_ipss_r(total_score: float) -> Tuple[str, str]:
     """Classify IPSS-R total score into risk category."""
-    if total_score <= 1.5:
-        return "Very Low", "Consider watchful waiting; favorable prognosis"
-    elif total_score <= 3.0:
-        return "Low", "Consider supportive care; low-risk management"
-    elif total_score <= 4.5:
-        return "Intermediate", "Consider clinical trial or hypomethylating agents"
-    elif total_score <= 6.0:
-        return "High", "Consider hypomethylating agents or transplant evaluation"
+    score = _nonnegative_finite(total_score, "IPSS-R score", 10.0)
+    note = "Prognostic classification only; treatment requires individualized specialist assessment."
+    if score <= 1.5:
+        return "Very Low", note
+    elif score <= 3.0:
+        return "Low", note
+    elif score <= 4.5:
+        return "Intermediate", note
+    elif score <= 6.0:
+        return "High", note
     else:
-        return "Very High", "Consider allogeneic stem cell transplant; poor prognosis"
+        return "Very High", note
 
 
 def calculate_metrics(
@@ -220,9 +229,8 @@ def process_batch(input_csv: str, output_csv: str) -> None:
         fieldnames = list(reader.fieldnames or [])
         rows = list(reader)
 
-    if not rows:
-        print(f"Warning: No data rows found in {input_csv}")
-        return
+    if not fieldnames:
+        raise ValueError("Input CSV must contain a header row")
 
     # Map common column name variants
     column_mapping = {
@@ -233,7 +241,7 @@ def process_batch(input_csv: str, output_csv: str) -> None:
         "anc": ["anc", "absolute_neutrophil_count", "neutrophils"],
     }
 
-    out_fields = fieldnames + ["ipss_r_score", "risk_category", "clinical_recommendation"]
+    out_fields = list(dict.fromkeys(fieldnames + ["ipss_r_score", "risk_category", "clinical_recommendation"]))
     out_rows = []
     errors = []
 
