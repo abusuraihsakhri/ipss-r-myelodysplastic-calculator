@@ -4,7 +4,7 @@ FastAPI REST API Server for Ipss R Myelodysplastic Calculator.
 from typing import Dict, Any, List
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from fastapi.responses import FileResponse
+from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 from ipss_r import calculate_metrics
@@ -36,7 +36,7 @@ app.mount("/web", StaticFiles(directory=WEB_DIR), name="web")
 
 @app.get("/", include_in_schema=False)
 def homepage():
-    return FileResponse(WEB_DIR / "index.html")
+    return RedirectResponse("/web/")
 
 
 @app.post("/api/calculate")
